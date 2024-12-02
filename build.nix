@@ -13,14 +13,14 @@
 }:
 
 let
-  scripts = {
-    hello = buildGoApplication {
+  src = {
+    day1 = buildGoApplication {
       pname = "day1";
       version = "0.1";
       go = pkgs.go_1_23;
-      src = ./scripts/day1;
-      modules = ./scripts/day1/gomod2nix.toml;
+      src = ./src/day1;
+      modules = ./src/day1/gomod2nix.toml;
     };
   };
 in
-scripts.${script}
+src.${script}
