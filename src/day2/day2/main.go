@@ -20,28 +20,38 @@ func main() {
 
 func CountSafeReports(reports [][]int) int {
 	count := 0
-	for j, report := range reports {
-		if checkIfReportIsSafe(report, j) {
+	for _, report := range reports {
+		output := checkIfReportIsSafe(report)
+		if output {
 			count++
 		}
 	}
 	return count
 }
 
-func checkIfReportIsSafe(report []int, j int) bool {
-	if j == 193 {
-		fmt.Println("Checking Report: ", report, j+1)
-	}
+func checkIfReportIsSafe(report []int) bool {
 	output, i := checkReport(report)
+
 	if !output {
 		newReport := make([]int, len(report)-1)
 		copy(newReport, report[:i])
 		copy(newReport[i:], report[i+1:])
 		output, _ = checkReport(newReport)
-		if j == 193 {
-			fmt.Println("Failing Report: ", report, j+1)
-		}
 	}
+
+	if !output {
+		newReport := make([]int, len(report)-1)
+		copy(newReport, report[:i-1])
+		copy(newReport[i-1:], report[i:])
+		output, _ = checkReport(newReport)
+	}
+
+	if !output {
+		newReport := make([]int, len(report)-1)
+		copy(newReport, report[1:])
+		output, _ = checkReport(newReport)
+	}
+
 	return output
 }
 
@@ -74,13 +84,8 @@ func readTestData(filename string) ([][]int, error) {
 
 	var data [][]int
 	scanner := bufio.NewScanner(file)
-	var lineCount int
-	printLine := 193
 	for scanner.Scan() {
 		line := scanner.Text()
-		if lineCount == printLine {
-			fmt.Println("Reading line: ", line)
-		}
 		strValues := strings.Fields(line)
 		var intValues []int
 		for _, strValue := range strValues {
@@ -90,11 +95,7 @@ func readTestData(filename string) ([][]int, error) {
 			}
 			intValues = append(intValues, intValue)
 		}
-		if lineCount == printLine {
-			fmt.Println("Read values: ", intValues)
-		}
 		data = append(data, intValues)
-		lineCount++
 	}
 
 	if err := scanner.Err(); err != nil {
