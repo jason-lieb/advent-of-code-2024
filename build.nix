@@ -21,6 +21,13 @@ let
       src = ./src/day1;
       modules = ./src/day1/gomod2nix.toml;
     };
+    day2 = buildGoApplication {
+      pname = "day2";
+      version = "0.1";
+      go = pkgs.go_1_23;
+      src = ./src/day2;
+      modules = ./src/day2/gomod2nix.toml;
+    };
   };
 in
 src.${script}

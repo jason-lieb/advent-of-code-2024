@@ -28,6 +28,7 @@
 
         packages = {
           day1 = buildPackage "day1";
+          day2 = buildPackage "day2";
         };
 
         packageOutputs = builtins.attrValues packages;
