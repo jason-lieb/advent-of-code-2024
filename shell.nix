@@ -1,23 +1,11 @@
 {
-  pkgs ? (
-    let
-      inherit (builtins) fetchTree fromJSON readFile;
-      inherit ((fromJSON (readFile ./flake.lock)).nodes) nixpkgs gomod2nix;
-    in
-    import (fetchTree nixpkgs.locked) {
-      overlays = [ (import "${fetchTree gomod2nix.locked}/overlay.nix") ];
-    }
-  ),
-  mkGoEnv ? pkgs.mkGoEnv,
-  gomod2nix ? pkgs.gomod2nix,
+  pkgs,
+  mkGoEnv,
+  gomod2nix,
 }:
 
 let
-  goEnv = mkGoEnv { pwd = ./src/day1; };
+  srcDirs = builtins.attrNames (builtins.readDir ./src);
+  goEnvs = map (dir: mkGoEnv { pwd = ./src + "/${dir}"; }) srcDirs;
 in
-pkgs.mkShell {
-  packages = [
-    goEnv
-    gomod2nix
-  ];
-}
+pkgs.mkShell { packages = [ gomod2nix ] ++ goEnvs; }

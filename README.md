@@ -12,4 +12,3 @@ Advent of Code challenges completed with Go and built with Nix
 ### To Do
 - Switch int types to more specific types
 - Switch slices to arrays where possible
-- Simplify build setup

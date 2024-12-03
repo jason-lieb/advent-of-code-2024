@@ -1,11 +1,13 @@
 {
   description = "Advent of Code 2024";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
-  inputs.gomod2nix.url = "github:nix-community/gomod2nix";
-  inputs.gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
-  inputs.gomod2nix.inputs.flake-utils.follows = "flake-utils";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+    gomod2nix.url = "github:nix-community/gomod2nix";
+    gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
+    gomod2nix.inputs.flake-utils.follows = "flake-utils";
+  };
 
   outputs =
     {
@@ -14,7 +16,7 @@
       flake-utils,
       gomod2nix,
     }:
-    (flake-utils.lib.eachDefaultSystem (
+    flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -26,10 +28,13 @@
             inherit script;
           };
 
-        packages = {
-          day1 = buildPackage "day1";
-          day2 = buildPackage "day2";
-        };
+        srcDirs = builtins.attrNames (builtins.readDir ./src);
+        packages = builtins.listToAttrs (
+          map (name: {
+            inherit name;
+            value = buildPackage name;
+          }) srcDirs
+        );
 
         packageOutputs = builtins.attrValues packages;
       in
@@ -47,5 +52,5 @@
           inherit (gomod2nix.legacyPackages.${system}) mkGoEnv gomod2nix;
         };
       }
-    ));
+    );
 }
