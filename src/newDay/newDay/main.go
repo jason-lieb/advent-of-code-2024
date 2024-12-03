@@ -54,6 +54,32 @@ func createNewScript(name string) error {
 		return fmt.Errorf("creating test-data.txt: %w", err)
 	}
 
+	mainContent :=
+		`package main
+
+func main() {
+
+}
+`
+	mainFile := filepath.Join(childDir, "main.go")
+	if err := os.WriteFile(mainFile, []byte(mainContent), 0644); err != nil {
+		return fmt.Errorf("creating main.go: %w", err)
+	}
+
+	mainTestContent :=
+		`package main
+
+import "testing"
+
+func TestMain(t *testing.T) {
+
+}
+`
+	mainTestFile := filepath.Join(childDir, "main_test.go")
+	if err := os.WriteFile(mainTestFile, []byte(mainTestContent), 0644); err != nil {
+		return fmt.Errorf("creating main_test.go: %w", err)
+	}
+
 	return nil
 }
 
