@@ -20,13 +20,14 @@ func main() {
 	fmt.Println("Incorrect total: ", incorrectTotal)
 }
 
-func ProcessUpdates(rules map[int][]int, updates [][]int) (int, int) {
+func ProcessUpdates(rules [][]int, updates [][]int) (int, int) {
 	correctTotal := 0
 	incorrectTotal := 0
 	incorrectUpdates := [][]int{}
 
+	ruleMap := mkRuleMap(rules)
 	for _, update := range updates {
-		out := ProcessCorrectUpdate(rules, update)
+		out := ProcessCorrectUpdate(ruleMap, update)
 		correctTotal += out
 		if out == 0 {
 			incorrectUpdates = append(incorrectUpdates, update)
@@ -40,39 +41,46 @@ func ProcessUpdates(rules map[int][]int, updates [][]int) (int, int) {
 	return correctTotal, incorrectTotal
 }
 
-func ProcessIncorrectUpdate(rules map[int][]int, update []int) int {
-	unavailablePages := make(map[int]struct{})
+func ProcessIncorrectUpdate(rules [][]int, update []int) int {
 	sortedPages := []int{}
-
-	for _, page := range update {
-		_, exists := unavailablePages[page]
-		if exists {
-			insertPos := 0
-			for i, p := range sortedPages {
-				if contains(rules[page], p) {
-					insertPos = i
-					fmt.Println("insertPos: ", insertPos)
-					fmt.Println("p: ", p)
-					break
-				}
-			}
-
-			newSorted := make([]int, len(sortedPages)+1)
-
-			copy(newSorted, sortedPages[:insertPos])
-			newSorted[insertPos] = page
-			copy(newSorted[insertPos+1:], sortedPages[insertPos:])
-
-			sortedPages = newSorted
-		} else {
-			sortedPages = append(sortedPages, page)
-		}
-
-		for _, rule := range rules[page] {
-			unavailablePages[rule] = struct{}{}
+	filteredRules := [][]int{}
+	for _, rule := range rules {
+		if contains(update, rule[0]) && contains(update, rule[1]) {
+			filteredRules = append(filteredRules, rule)
 		}
 	}
-	fmt.Println("sortedPages: ", sortedPages)
+
+	adjList := make(map[int][]int)
+	inDegree := make(map[int]int)
+	for _, page := range update {
+		adjList[page] = []int{}
+		inDegree[page] = 0
+	}
+	for _, rule := range filteredRules {
+		u, v := rule[0], rule[1]
+		adjList[u] = append(adjList[u], v)
+		inDegree[v]++
+	}
+
+	queue := []int{}
+	for page, degree := range inDegree {
+		if degree == 0 {
+			queue = append(queue, page)
+		}
+	}
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		sortedPages = append(sortedPages, current)
+
+		for _, neighbor := range adjList[current] {
+			inDegree[neighbor]--
+			if inDegree[neighbor] == 0 {
+				queue = append(queue, neighbor)
+			}
+		}
+	}
 
 	return sortedPages[len(sortedPages)/2]
 }
@@ -123,7 +131,7 @@ func ProcessCorrectUpdate(rules map[int][]int, update []int) int {
 	return update[len(update)/2]
 }
 
-func readTestData(filename string) (map[int][]int, [][]int, error) {
+func readTestData(filename string) ([][]int, [][]int, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, nil, err
@@ -137,13 +145,22 @@ func readTestData(filename string) (map[int][]int, [][]int, error) {
 	return rules, updates, nil
 }
 
-func ProcessTestData(input string) (map[int][]int, [][]int, error) {
+func mkRuleMap(rules [][]int) map[int][]int {
+	ruleMap := map[int][]int{}
+	for _, rule := range rules {
+		u, v := rule[0], rule[1]
+		ruleMap[v] = append(ruleMap[v], u)
+	}
+	return ruleMap
+}
+
+func ProcessTestData(input string) ([][]int, [][]int, error) {
 	sections := strings.Split(strings.TrimSpace(input), "\n\n")
 	if len(sections) != 2 {
 		return nil, nil, fmt.Errorf("expected 2 sections, got %d", len(sections))
 	}
 
-	rules := map[int][]int{}
+	rules := [][]int{}
 	for _, line := range strings.Split(sections[0], "\n") {
 		numbers := strings.Split(line, "|")
 		if len(numbers) != 2 {
@@ -160,7 +177,7 @@ func ProcessTestData(input string) (map[int][]int, [][]int, error) {
 			return nil, nil, fmt.Errorf("invalid right number: %s", numbers[1])
 		}
 
-		rules[right] = append(rules[right], left)
+		rules = append(rules, []int{left, right})
 	}
 
 	updates := [][]int{}
